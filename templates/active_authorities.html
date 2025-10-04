@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEye - Active Authorities</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f4f7f9; --primary-blue: #007bff; --accent-teal: #17a2b8;
+            --text-dark: #343a40; --card-bg: rgba(255, 255, 255, 0.9);
+        }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark);
+            min-height: 100vh; margin: 0; padding: 0;
+        }
+        header {
+            background-color: var(--card-bg); padding: 15px 50px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.8em; font-weight: 700; color: var(--primary-blue); text-decoration: none; }
+        .back-link { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 30px; }
+        h1 { color: var(--accent-teal); text-align: center; margin-bottom: 30px; }
+        .authority-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .authority-card {
+            background: var(--card-bg); backdrop-filter: blur(5px); padding: 20px; border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border-top: 5px solid var(--primary-blue);
+            transition: transform 0.3s;
+        }
+        .authority-card:hover { transform: translateY(-3px); }
+        .authority-card h3 { color: var(--text-dark); margin-top: 0; }
+        .authority-card p { margin: 5px 0; font-size: 0.95em; }
+        .authority-card strong { color: var(--primary-blue); }
+        footer { background-color: var(--text-dark); color: white; text-align: center; padding: 20px 0; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">👁️ OpenEye</a>
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    </header>
+
+    <div class="container">
+        <h1>🤝 Active Government Authorities</h1>
+        <p style="text-align: center; margin-bottom: 30px;">These officials are registered with OpenEye and ready to act on public complaints.</p>
+        
+        <div class="authority-list" id="authorities-container">
+            <p style="text-align: center; grid-column: 1 / -1;">No government officials have registered yet.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 OpenEye Portal. Contact: <a href="mailto:333">email id - 333</a></p>
+    </footer>
+
+    <script>
+        async function renderAuthorities() {
+            const authoritiesContainer = document.getElementById('authorities-container');
+            authoritiesContainer.innerHTML = ''; // Clear previous content
+
+            try {
+                const response = await fetch('/api/authorities');
+                const result = await response.json();
+
+                if (result.success) {
+                    const authorities = result.authorities;
+
+                    if (authorities.length === 0) {
+                        authoritiesContainer.innerHTML = '<p style="text-align: center; grid-column: 1 / -1;">No government officials have registered yet.</p>';
+                        return;
+                    }
+
+                    authorities.forEach(authority => {
+                        const card = document.createElement('div');
+                        card.className = 'authority-card';
+                        card.innerHTML = `
+                            <h3><i class="fas fa-user-tie"></i> ${authority.name}</h3>
+                            <p><strong>Department:</strong> ${authority.department}</p>
+                            <p><strong>Jurisdiction:</strong> ${authority.jurisdiction}</p>
+                            <p><strong>Email:</strong> ${authority.contact_email} (For Official Correspondence)</p>
+                            <p><strong>Phone:</strong> ${authority.contact_phone}</p>
+                        `;
+                        authoritiesContainer.appendChild(card);
+                    });
+                } else {
+                    authoritiesContainer.innerHTML = '<p style="text-align: center; grid-column: 1 / -1;">Error loading authorities. Please try again.</p>';
+                }
+            } catch (error) {
+                authoritiesContainer.innerHTML = '<p style="text-align: center; grid-column: 1 / -1;">Error loading authorities. Please try again.</p>';
+                console.error('Error loading authorities:', error);
+            }
+        }
+
+        renderAuthorities();
+    </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEye - File a Complaint</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f4f7f9; --primary-blue: #007bff; --accent-teal: #17a2b8;
+            --text-dark: #343a40; --card-bg: rgba(255, 255, 255, 0.9);
+        }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark);
+            min-height: 100vh; margin: 0; padding: 0;
+        }
+        header {
+            background-color: var(--card-bg); padding: 15px 50px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.8em; font-weight: 700; color: var(--primary-blue); text-decoration: none; }
+        .back-link { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+        .container { max-width: 800px; margin: 40px auto; padding: 30px; background: var(--card-bg); backdrop-filter: blur(5px); border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        h1 { color: var(--accent-teal); text-align: center; margin-bottom: 30px; }
+        .disclaimer {
+            background-color: #ffe0b2; color: #ff9800; padding: 15px; border-radius: 5px;
+            margin-bottom: 25px; border-left: 5px solid #ff9800; font-weight: 500;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; }
+        .form-group select, .form-group textarea, .form-group input[type="file"] {
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
+            resize: vertical;
+        }
+        .form-group textarea { min-height: 150px; }
+        .btn-submit {
+            width: 100%; padding: 15px; background-color: var(--primary-blue); color: white;
+            border: none; border-radius: 5px; cursor: pointer; font-size: 1.2em; margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+        .btn-submit:hover { background-color: #0056b3; }
+        footer { background-color: var(--text-dark); color: white; text-align: center; padding: 20px 0; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">👁️ OpenEye</a>
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    </header>
+
+    <div class="container">
+        <h1>File Your Anonymous Complaint</h1>
+
+        <div class="disclaimer">
+            <i class="fas fa-exclamation-triangle"></i> **DISCLAIMER:** Strict action will be taken against individuals filing **fake, malicious, or fabricated complaints.** Use this portal responsibly.
+        </div>
+
+        <form id="complaint-form" onsubmit="submitComplaint(event)">
+            
+            <div class="form-group">
+                <label for="problem-domain"><i class="fas fa-list-alt"></i> Select Problem Domain:</label>
+                <select id="problem-domain" required>
+                    <option value="">-- Choose a Domain --</option>
+                    <option value="Water Logging">Water Logging</option>
+                    <option value="Road Potholes">Road Potholes</option>
+                    <option value="Police Misconduct">Police Misconduct</option>
+                    <option value="Corruption">Corruption</option>
+                    <option value="Against Government Official">Against Government Official</option>
+                    <option value="Open Domain">Open Domain (Other Issue)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="complaint-text"><i class="fas fa-keyboard"></i> Complaint Description (Be detailed and factual):</label>
+                <textarea id="complaint-text" required placeholder="Type your complaint here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="media-file"><i class="fas fa-camera"></i> Attach Evidence (Photos/Videos - Mock upload):</label>
+                <input type="file" id="media-file" accept="image/*,video/*" multiple>
+            </div>
+            
+            <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Post Complaint Anonymously</button>
+            <p id="form-message" style="margin-top: 15px; text-align: center; font-weight: 600;"></p>
+        </form>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 OpenEye Portal. Contact: <a href="mailto:333">email id - 333</a></p>
+    </footer>
+
+    <script>
+        async function submitComplaint(event) {
+            event.preventDefault();
+            const domain = document.getElementById('problem-domain').value;
+            const text = document.getElementById('complaint-text').value;
+            const mediaFile = document.getElementById('media-file').files.length;
+            const msgEl = document.getElementById('form-message');
+
+            if (!domain || !text) {
+                msgEl.textContent = 'Please fill out all required fields.';
+                msgEl.style.color = 'red';
+                return;
+            }
+
+            // Submit complaint via API
+            try {
+                const complaintData = {
+                    domain: domain,
+                    description: text
+                };
+
+                const response = await fetch('/api/complaints', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(complaintData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    msgEl.textContent = `Success! Complaint ${result.complaint_id} posted. It is now in the Pending Problems list.`;
+                    msgEl.style.color = 'green';
+                    document.getElementById('complaint-form').reset(); // Clear form
+                    
+                    // Redirect to pending problems after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/pending_problems.html';
+                    }, 2000);
+                } else {
+                    msgEl.textContent = `Error: ${result.message}`;
+                    msgEl.style.color = 'red';
+                }
+            } catch (error) {
+                msgEl.textContent = 'Error: Network connection failed. Please try again.';
+                msgEl.style.color = 'red';
+                console.error('Complaint submission error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

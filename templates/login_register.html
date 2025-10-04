@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEye - Login/Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f4f7f9; --primary-blue: #007bff; --accent-teal: #17a2b8;
+            --text-dark: #343a40; --card-bg: rgba(255, 255, 255, 0.9);
+        }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            background-image: url('https://source.unsplash.com/random/1920x1080/?city,sky,login');
+            background-size: cover; background-attachment: fixed;
+        }
+        .container {
+            background: var(--card-bg); backdrop-filter: blur(5px); border-radius: 10px;
+            padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); width: 100%; max-width: 450px;
+        }
+        h1 { color: var(--primary-blue); text-align: center; margin-bottom: 25px; }
+        .tabs button {
+            flex-grow: 1; padding: 10px; border: none; cursor: pointer; font-size: 1.1em;
+            background-color: #e9ecef; color: #6c757d; transition: background-color 0.3s;
+        }
+        .tabs button.active { background-color: var(--primary-blue); color: white; }
+        .tabs { display: flex; margin-bottom: 20px; border-radius: 5px; overflow: hidden; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
+        }
+        .btn-submit {
+            width: 100%; padding: 12px; background-color: var(--accent-teal); color: white;
+            border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; margin-top: 15px;
+            transition: background-color 0.3s;
+        }
+        .btn-submit:hover { background-color: #138496; }
+        .message { margin-top: 15px; text-align: center; font-weight: 500; }
+        .auth-options { display: flex; justify-content: space-around; margin-bottom: 25px; }
+        .auth-options button {
+            padding: 15px 25px; background-color: var(--accent-teal); color: white; border: none;
+            border-radius: 8px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s;
+        }
+        .auth-options button:hover { background-color: var(--primary-blue); }
+        .back-link { position: absolute; top: 20px; left: 20px; color: var(--primary-blue); text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="container">
+        <h1>Welcome to OpenEye Access</h1>
+
+        <div id="user-type-selection">
+            <p style="text-align: center; font-size: 1.1em;">Please select your user type to proceed:</p>
+            <div class="auth-options">
+                <button onclick="selectUserType('government')"><i class="fas fa-user-shield"></i> Government</button>
+                <button onclick="selectUserType('public')"><i class="fas fa-users"></i> Public</button>
+            </div>
+        </div>
+
+        <div id="auth-forms" style="display: none;">
+            <div class="tabs">
+                <button id="tab-login" class="active" onclick="showTab('login')">Login</button>
+                <button id="tab-register" onclick="showTab('register')">Register</button>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label id="login-username-label" for="login-username"></label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn-submit">Sign In</button>
+            </form>
+
+            <form id="register-form" onsubmit="handleRegister(event)" style="display: none;">
+                <div id="public-fields">
+                    <div class="form-group">
+                        <label for="reg-username-public">Username (Suggested by us)</label>
+                        <input type="text" id="reg-username-public" required readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password-public">Password</label>
+                        <input type="password" id="reg-password-public" required>
+                    </div>
+                </div>
+
+                <div id="government-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="reg-email-gov">Email ID</label>
+                        <input type="email" id="reg-email-gov" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-name-gov">Name</label>
+                        <input type="text" id="reg-name-gov" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password-gov">Password</label>
+                        <input type="password" id="reg-password-gov" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-office-gov">Municipal Office</label>
+                        <input type="text" id="reg-office-gov" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-post-gov">Post Description</label>
+                        <input type="text" id="reg-post-gov" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Register</button>
+            </form>
+            <p id="auth-message" class="message"></p>
+        </div>
+    </div>
+
+    <script>
+        let currentUserType = ''; // 'public' or 'government'
+
+        function showTab(tab) {
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('tab-register').classList.remove('active');
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('auth-message').textContent = '';
+
+            if (tab === 'login') {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('login-form').style.display = 'block';
+            } else {
+                document.getElementById('tab-register').classList.add('active');
+                document.getElementById('register-form').style.display = 'block';
+            }
+        }
+
+        function generatePublicUsername() {
+            const adjectives = ['Anonymous', 'Observer', 'Citizen', 'Silent'];
+            const nouns = ['Eye', 'Voice', 'Watch', 'Truth'];
+            const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+            const randomNumber = Math.floor(Math.random() * 900) + 100;
+            return `${randomAdj}${randomNoun}${randomNumber}`;
+        }
+
+        function selectUserType(type) {
+            currentUserType = type;
+            document.getElementById('user-type-selection').style.display = 'none';
+            document.getElementById('auth-forms').style.display = 'block';
+
+            // Update Login form label
+            const loginLabel = document.getElementById('login-username-label');
+            const regUsernameInput = document.getElementById('reg-username-public');
+
+            if (type === 'government') {
+                loginLabel.textContent = 'Email ID';
+                document.getElementById('public-fields').style.display = 'none';
+                document.getElementById('government-fields').style.display = 'block';
+            } else {
+                loginLabel.textContent = 'Username';
+                regUsernameInput.value = generatePublicUsername();
+                document.getElementById('public-fields').style.display = 'block';
+                document.getElementById('government-fields').style.display = 'none';
+            }
+            showTab('login'); // Default to login after selection
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            const msgEl = document.getElementById('auth-message');
+            
+            try {
+                let registerData;
+                
+                if (currentUserType === 'government') {
+                    const email = document.getElementById('reg-email-gov').value;
+                    const name = document.getElementById('reg-name-gov').value;
+                    const password = document.getElementById('reg-password-gov').value;
+                    
+                    registerData = {
+                        username: name,
+                        email: email,
+                        password: password,
+                        user_type: 'government'
+                    };
+                } else {
+                    const username = document.getElementById('reg-username-public').value;
+                    const password = document.getElementById('reg-password-public').value;
+                    
+                    registerData = {
+                        username: username,
+                        email: username + '@example.com', // Generate email for public users
+                        password: password,
+                        user_type: 'public'
+                    };
+                }
+
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registerData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    msgEl.textContent = `Success! ${currentUserType === 'government' ? 'Government account' : 'Username'} registered. Please log in.`;
+                    msgEl.style.color = 'green';
+                    
+                    // Clear form and switch to login
+                    event.target.reset();
+                    if (currentUserType === 'public') {
+                        document.getElementById('reg-username-public').value = generatePublicUsername();
+                    }
+                    showTab('login');
+                } else {
+                    msgEl.textContent = `Error: ${result.message}`;
+                    msgEl.style.color = 'red';
+                }
+            } catch (error) {
+                msgEl.textContent = 'Error: Network connection failed. Please try again.';
+                msgEl.style.color = 'red';
+                console.error('Registration error:', error);
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const identifier = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const msgEl = document.getElementById('auth-message');
+
+            try {
+                const loginData = {
+                    username: identifier,
+                    password: password
+                };
+
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Store user info in localStorage
+                    localStorage.setItem('openeye_active_user', JSON.stringify({
+                        identifier: identifier,
+                        type: currentUserType,
+                        displayName: result.user.username,
+                        userId: result.user.id
+                    }));
+                    
+                    msgEl.textContent = 'Login Successful! Redirecting...';
+                    msgEl.style.color = 'green';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/'; // Redirect to homepage
+                    }, 500);
+                } else {
+                    msgEl.textContent = `Login Failed: ${result.message}`;
+                    msgEl.style.color = 'red';
+                }
+            } catch (error) {
+                msgEl.textContent = 'Error: Network connection failed. Please try again.';
+                msgEl.style.color = 'red';
+                console.error('Login error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

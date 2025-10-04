@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEye - Pending/Solved Problems</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg-light: #f4f7f9; --primary-blue: #007bff; --accent-teal: #17a2b8;
+            --text-dark: #343a40; --card-bg: rgba(255, 255, 255, 0.9);
+            --status-pending: #ffc107; --status-solved: #28a745;
+        }
+        body {
+            font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark);
+            min-height: 100vh; margin: 0; padding: 0;
+        }
+        header {
+            background-color: var(--card-bg); padding: 15px 50px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.8em; font-weight: 700; color: var(--primary-blue); text-decoration: none; }
+        .back-link { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 30px; }
+        h1 { color: var(--primary-blue); text-align: center; margin-bottom: 30px; }
+        .complaint-list { display: grid; gap: 20px; }
+        .complaint-card {
+            background: var(--card-bg); backdrop-filter: blur(5px); padding: 20px; border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border-left: 5px solid var(--primary-blue);
+            transition: transform 0.3s;
+        }
+        .complaint-card:hover { transform: translateY(-3px); }
+        .complaint-card.solved { border-left-color: var(--status-solved); }
+        .complaint-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .status {
+            padding: 5px 10px; border-radius: 5px; font-weight: 600; font-size: 0.9em;
+            color: #333;
+        }
+        .status.Pending { background-color: var(--status-pending); }
+        .status.Solved { background-color: var(--status-solved); color: white; }
+        .solution-btn {
+            background-color: var(--accent-teal); color: white; border: none; padding: 8px 15px;
+            border-radius: 5px; cursor: pointer; transition: background-color 0.3s;
+        }
+        .solution-btn:hover { background-color: #138496; }
+        .solution-box {
+            margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;
+            background-color: #f8f9fa; padding: 15px; border-radius: 5px;
+        }
+        footer { background-color: var(--text-dark); color: white; text-align: center; padding: 20px 0; margin-top: 50px; }
+
+        /* Modal for Solution Upload */
+        .modal {
+            display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.4); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close:hover, .close:focus { color: #000; text-decoration: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">👁️ OpenEye</a>
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    </header>
+
+    <div class="container">
+        <h1 id="page-title">Complaint Tracker</h1>
+        <p id="user-greeting" style="text-align: center; margin-bottom: 20px; font-weight: 500;"></p>
+
+        <div class="complaint-list" id="complaints-container">
+            <p style="text-align: center;">No complaints logged yet, or data is loading...</p>
+        </div>
+    </div>
+
+    <div id="solution-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('solution-modal').style.display='none'">&times;</span>
+            <h2>Upload Solution for Complaint #<span id="modal-complaint-id"></span></h2>
+            <form id="solution-form" onsubmit="submitSolution(event)">
+                <input type="hidden" id="complaint-id-input">
+                <div class="form-group">
+                    <label for="solution-text">Solution Details:</label>
+                    <textarea id="solution-text" required placeholder="Type the steps taken and resolution details..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="solution-media">Attach Proof (Images/Videos - Mock upload):</label>
+                    <input type="file" id="solution-media" accept="image/*,video/*" multiple>
+                </div>
+                <button type="submit" class="btn-submit" style="background-color: var(--status-solved);"><i class="fas fa-upload"></i> Mark Solved & Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 OpenEye Portal. Contact: <a href="mailto:333">email id - 333</a></p>
+    </footer>
+
+    <script>
+        const activeUser = JSON.parse(localStorage.getItem('openeye_active_user'));
+        const complaintsContainer = document.getElementById('complaints-container');
+        const isGovernment = activeUser && activeUser.type === 'government';
+
+        async function renderComplaints() {
+            complaintsContainer.innerHTML = ''; // Clear previous content
+
+            try {
+                const response = await fetch('/api/complaints');
+                const result = await response.json();
+
+                if (result.success) {
+                    const complaints = result.complaints;
+
+                    if (complaints.length === 0) {
+                        complaintsContainer.innerHTML = '<p style="text-align: center;">No complaints have been filed yet. Check back soon!</p>';
+                        return;
+                    }
+
+                    complaints.forEach(complaint => {
+                        const card = document.createElement('div');
+                        card.className = `complaint-card ${complaint.status.toLowerCase()}`;
+                        
+                        let solutionBtnHtml = '';
+                        if (isGovernment && complaint.status === 'pending') {
+                            solutionBtnHtml = `<button class="solution-btn" onclick="openSolutionModal('${complaint.complaint_id}')">Upload Solution</button>`;
+                        }
+                        
+                        let solutionDetailsHtml = '';
+                        if (complaint.status === 'resolved') {
+                            solutionDetailsHtml = `
+                                <div class="solution-box">
+                                    <p style="color: var(--status-solved); font-weight: 600;"><i class="fas fa-medal"></i> **SOLUTION PROVIDED**</p>
+                                    <p>This complaint has been resolved by the authorities.</p>
+                                </div>
+                            `;
+                        }
+
+                        card.innerHTML = `
+                            <div class="complaint-header">
+                                <h3 style="margin: 0;">Complaint #${complaint.complaint_id}</h3>
+                                <span class="status ${complaint.status}">${complaint.status}</span>
+                            </div>
+                            <p><strong>Domain:</strong> ${complaint.domain}</p>
+                            <p><strong>Details:</strong> ${complaint.description.substring(0, 150)}${complaint.description.length > 150 ? '...' : ''}</p>
+                            <p style="font-size: 0.9em;">Filed on: ${new Date(complaint.created_at).toLocaleString()}</p>
+                            ${solutionDetailsHtml}
+                            ${solutionBtnHtml}
+                        `;
+                        complaintsContainer.appendChild(card);
+                    });
+                } else {
+                    complaintsContainer.innerHTML = '<p style="text-align: center;">Error loading complaints. Please try again.</p>';
+                }
+            } catch (error) {
+                complaintsContainer.innerHTML = '<p style="text-align: center;">Error loading complaints. Please try again.</p>';
+                console.error('Error loading complaints:', error);
+            }
+        }
+
+        function openSolutionModal(complaintId) {
+            if (!isGovernment) return; // Safety check
+            document.getElementById('modal-complaint-id').textContent = complaintId;
+            document.getElementById('complaint-id-input').value = complaintId;
+            document.getElementById('solution-modal').style.display = 'flex';
+        }
+
+        function submitSolution(event) {
+            event.preventDefault();
+            const complaintId = parseInt(document.getElementById('complaint-id-input').value);
+            const solutionText = document.getElementById('solution-text').value;
+            
+            if (!solutionText) return;
+
+            let complaints = JSON.parse(localStorage.getItem('openeye_complaints') || '[]');
+            const complaintIndex = complaints.findIndex(c => c.id === complaintId);
+
+            if (complaintIndex !== -1) {
+                // Get solver details from active user session
+                const govUsers = JSON.parse(localStorage.getItem('openeye_users') || '[]').filter(u => u.type === 'government');
+                const solver = govUsers.find(u => u.email === activeUser.identifier);
+
+                complaints[complaintIndex].status = 'Solved';
+                complaints[complaintIndex].solution = {
+                    text: solutionText,
+                    timestamp: new Date().toLocaleString(),
+                    solverName: solver ? solver.name : 'Government Authority',
+                    solverPost: solver ? solver.post : 'Official'
+                };
+                
+                localStorage.setItem('openeye_complaints', JSON.stringify(complaints));
+                document.getElementById('solution-modal').style.display = 'none';
+                document.getElementById('solution-form').reset();
+                renderComplaints(); // Re-render the list
+                alert(`Complaint #${complaintId} marked as Solved!`);
+            }
+        }
+
+        // Set page title and greeting
+        if (activeUser) {
+            if (isGovernment) {
+                document.getElementById('page-title').textContent = 'Government Authority Dashboard';
+                document.getElementById('user-greeting').textContent = `Welcome back, ${activeUser.displayName}. Here are the pending tasks.`;
+            } else {
+                document.getElementById('user-greeting').textContent = `Hello, ${activeUser.displayName}. Track the progress of all reported issues below.`;
+            }
+        } else {
+             document.getElementById('user-greeting').textContent = `You are viewing as a guest. Login as Government to upload solutions.`;
+        }
+
+        renderComplaints();
+    </script>
+</body>
+</html>
