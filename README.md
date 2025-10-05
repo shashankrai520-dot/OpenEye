@@ -44,11 +44,14 @@ OpenEye/
 
 3. **Run the application**
    ```bash
-   python backend/app.py
+   cd backend
+   python app.py
    ```
 
 4. **Access the application**
-   - Open your browser and go to `http://127.0.0.1:3000`
+   - **Local access:** `http://127.0.0.1:5000`
+   - **Network access:** `http://192.168.0.3:5000` (for devices on same network)
+   - **Public access:** Use ngrok for internet access (see Network Access section)
 
 ## Usage
 
@@ -80,6 +83,7 @@ OpenEye/
 
 ### Statistics
 - `GET /api/stats` - Get system statistics
+- `GET /api/problems-solved` - Get solved problems data
 
 ## Database Models
 
@@ -130,6 +134,38 @@ The application uses SQLite by default. For production, consider:
 - Update `SQLALCHEMY_DATABASE_URI` in configuration
 - Use environment variables for sensitive data
 
+## Network Access
+
+### Local Network Access
+The application is configured to run on all network interfaces (`0.0.0.0:5000`), making it accessible to other devices on the same network.
+
+**Access URLs:**
+- **Local:** `http://127.0.0.1:5000`
+- **Network:** `http://192.168.0.3:5000` (replace with your actual IP)
+
+### Public Internet Access (ngrok)
+
+To share the application with users on different networks:
+
+1. **Download ngrok:** https://ngrok.com/download
+2. **Create free account:** https://dashboard.ngrok.com/signup
+3. **Get authtoken** from dashboard
+4. **Configure ngrok:**
+   ```bash
+   ngrok config add-authtoken YOUR_AUTHTOKEN
+   ```
+5. **Start ngrok tunnel:**
+   ```bash
+   ngrok http 5000
+   ```
+6. **Share the public URL** (e.g., `https://abc123.ngrok.io`)
+
+### Windows Firewall Configuration
+If others can't access your app, add a firewall rule:
+```bash
+netsh advfirewall firewall add rule name="Python Flask" dir=in action=allow protocol=TCP localport=5000
+```
+
 ## Security Features
 
 - Password hashing using Werkzeug
@@ -149,6 +185,33 @@ The application uses SQLite by default. For production, consider:
 ## License
 
 This project is developed for educational and demonstration purposes.
+
+## Quick Start Guide
+
+### For Local Development
+```bash
+cd OpenEye/backend
+python app.py
+# Access at: http://127.0.0.1:5000
+```
+
+### For Network Sharing
+```bash
+# Same as above, then share: http://192.168.0.3:5000
+# (Replace 192.168.0.3 with your actual IP address)
+```
+
+### For Internet Sharing
+```bash
+# 1. Start Flask app
+cd OpenEye/backend
+python app.py
+
+# 2. In another terminal, start ngrok
+ngrok http 5000
+
+# 3. Share the ngrok URL (e.g., https://abc123.ngrok.io)
+```
 
 ## Support
 
